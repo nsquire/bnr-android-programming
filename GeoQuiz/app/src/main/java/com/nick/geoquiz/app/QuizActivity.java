@@ -34,7 +34,7 @@ public class QuizActivity extends ActionBarActivity {
             public void onClick(View view) {
                 Toast.makeText(QuizActivity.this,
                         R.string.correct_toast,
-                        Toast.LENGTH_SHORT);
+                        Toast.LENGTH_SHORT).show();
             }
         });
     }
