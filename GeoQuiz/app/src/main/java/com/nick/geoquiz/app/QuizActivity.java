@@ -14,6 +14,8 @@ import android.widget.Toast;
 public class QuizActivity extends ActionBarActivity {
     private static final String TAG = "QuizActivity";
     private static final String KEY_INDEX = "index";
+    private static final String KEY_IS_CHEATER = "is_cheater";
+    private static final String KEY_IS_CHEATER_TRACKER = "is_cheater_tracker";
 
     private Button mTrueButton;
     private Button mFalseButton;
@@ -31,6 +33,7 @@ public class QuizActivity extends ActionBarActivity {
 
     private int mCurrentIndex = 0;
     private boolean mIsCheater;
+    private boolean[] mCheatTracker = new boolean[mQuestionBank.length];
 
     // Activity Lifecycle methods
 
@@ -81,6 +84,8 @@ public class QuizActivity extends ActionBarActivity {
 
         if (savedInstanceState != null) {
             mCurrentIndex = savedInstanceState.getInt(KEY_INDEX, 0);
+            mIsCheater = savedInstanceState.getBoolean(KEY_IS_CHEATER, false);
+            mCheatTracker = savedInstanceState.getBooleanArray(KEY_IS_CHEATER_TRACKER);
         }
 
         updateQuestion();
@@ -95,6 +100,7 @@ public class QuizActivity extends ActionBarActivity {
         }
 
         mIsCheater = data.getBooleanExtra(CheatActivity.EXTRA_ANSER_SHOWN, false);
+        mCheatTracker[mCurrentIndex] = mIsCheater;
     }
 
     @Override
@@ -131,7 +137,10 @@ public class QuizActivity extends ActionBarActivity {
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         Log.i(TAG, "onSaveInstanceState");
+
         outState.putInt(KEY_INDEX, mCurrentIndex);
+        outState.putBoolean(KEY_IS_CHEATER, mIsCheater);
+        outState.putBooleanArray(KEY_IS_CHEATER_TRACKER, mCheatTracker);
     }
 
     @Override
@@ -164,7 +173,7 @@ public class QuizActivity extends ActionBarActivity {
 
         int messageResId = 0;
 
-        if (mIsCheater) {
+        if (mIsCheater || mCheatTracker[mCurrentIndex]) {
             messageResId = R.string.judgement_toast;
         } else {
             if (userPressedTrue == answerIsTrue) {
