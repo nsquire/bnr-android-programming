@@ -1,6 +1,7 @@
 package com.nick.geoquiz.app;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.View;
@@ -18,6 +19,7 @@ public class CheatActivity extends ActionBarActivity {
 
     private TextView mAnswerTextView;
     private Button mShowAnswer;
+    private TextView mApiLevelTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +47,9 @@ public class CheatActivity extends ActionBarActivity {
                 setAnswerShowResult(true);
             }
         });
+
+        mApiLevelTextView = (TextView) findViewById(R.id.apiLevelTextView);
+        mApiLevelTextView.setText(String.format("API Level %s", Build.VERSION.SDK_INT));
     }
 
     public void setAnswerShowResult(boolean isAnswerShown) {

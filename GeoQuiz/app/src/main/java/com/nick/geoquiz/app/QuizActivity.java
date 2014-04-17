@@ -1,6 +1,8 @@
 package com.nick.geoquiz.app;
 
+import android.app.ActionBar;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -31,6 +33,7 @@ public class QuizActivity extends ActionBarActivity {
 
     private int mCurrentIndex = 0;
     private boolean mIsCheater;
+    private TextView mApiLevelTextView;
 
     // Activity Lifecycle methods
 
@@ -40,6 +43,14 @@ public class QuizActivity extends ActionBarActivity {
         Log.d(TAG, "onCreate(Bundle) called");
         setContentView(R.layout.activity_quiz);
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            ActionBar actionBar = getActionBar();
+            if (actionBar != null) {
+                actionBar.setSubtitle("Bodies of water");
+            }
+        }
+
+        mIsCheater = false;
         mQuestionTextView = (TextView) findViewById(R.id.question_text_view);
 
         mTrueButton = (Button) findViewById(R.id.true_button);
@@ -84,6 +95,9 @@ public class QuizActivity extends ActionBarActivity {
         }
 
         updateQuestion();
+
+        mApiLevelTextView = (TextView) findViewById(R.id.apiLevelTextView);
+        mApiLevelTextView.setText(String.format("API Level %s", Build.VERSION.SDK_INT));
     }
 
     @Override
