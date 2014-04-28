@@ -1,6 +1,7 @@
 package com.nick.android.criminalIntent;
 
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.util.Log;
@@ -27,6 +28,12 @@ public class CrimeListFragment extends ListFragment {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        ((CrimeAdapter) getListAdapter()).notifyDataSetChanged();
+    }
+
+    @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getActivity().setTitle(R.string.crimes_title);
@@ -41,6 +48,11 @@ public class CrimeListFragment extends ListFragment {
         //super.onListItemClick(l, v, position, id);
         Crime c = ((CrimeAdapter) getListAdapter()).getItem(position);
         Log.d(TAG, c.getTitle() + " was clicked");
+
+        // Start CrimeActivity
+        Intent crimeActivityIntent = new Intent(getActivity(), CrimeActivity.class);
+        crimeActivityIntent.putExtra(CrimeFragment.EXTRA_CRIME_ID, c.getId());
+        startActivity(crimeActivityIntent);
     }
 
     private class CrimeAdapter extends ArrayAdapter<Crime> {
