@@ -8,5 +8,6 @@
     <string name="crime_title_label">Title</string>
     <string name="crimes_title">Crimes</string>
     <string name="title_activity_crime_pager">Crime Pager Activity</string>
+    <string name="date_picker_title">Date of crime:</string>
 
 </resources>
