@@ -29,7 +29,7 @@
         android:orientation="horizontal">
 
         <Button
-            android:id="@+id/crimeDate"
+            android:id="@+id/crimeDateTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1" />
