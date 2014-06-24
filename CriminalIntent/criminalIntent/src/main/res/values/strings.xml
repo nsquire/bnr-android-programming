@@ -9,5 +9,6 @@
     <string name="crimes_title">Crimes</string>
     <string name="title_activity_crime_pager">Crime Pager Activity</string>
     <string name="date_picker_title">Date of crime:</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 
 </resources>
