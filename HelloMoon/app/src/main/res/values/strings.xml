@@ -7,5 +7,6 @@
     <string name="helloMoon_stop">Stop</string>
     <string name="helloMoon_description">Neil Armstrong stepping onto the moon</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="helloMoon_pause">Pause</string>
 
 </resources>

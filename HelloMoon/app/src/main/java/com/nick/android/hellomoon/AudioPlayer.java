@@ -18,6 +18,12 @@ public class AudioPlayer {
     }
 
     public void play(Context context) {
+        // Check if paused
+        if (mPlayer != null && !mPlayer.isPlaying()) {
+            mPlayer.start();
+            return;
+        }
+
         stop();
 
         mPlayer = MediaPlayer.create(context, R.raw.one_small_step);
@@ -32,5 +38,10 @@ public class AudioPlayer {
         mPlayer.start();
     }
 
+    public void pause() {
+        if (mPlayer != null) {
+            mPlayer.pause();
+        }
+    }
 
 }
