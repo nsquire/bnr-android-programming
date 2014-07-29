@@ -2,13 +2,19 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <ImageView
+    <!--<ImageView-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent"-->
+    <!--android:layout_weight="1"-->
+    <!--android:contentDescription="@string/helloMoon_description"-->
+    <!--android:scaleType="centerInside"-->
+    <!--android:src="@drawable/armstrong_on_moon" />-->
+
+    <SurfaceView
+        android:id="@+id/helloMoon_videoSurfaceView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:contentDescription="@string/helloMoon_description"
-        android:scaleType="centerInside"
-        android:src="@drawable/armstrong_on_moon" />
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 
     <TableRow
         android:layout_weight="0"
