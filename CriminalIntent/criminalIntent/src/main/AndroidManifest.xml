@@ -18,7 +18,11 @@
         </activity>
         <activity
             android:name="com.nick.android.criminalIntent.CrimePagerActivity"
-            android:label="@string/title_activity_crime_pager"></activity>
+            android:label="@string/title_activity_crime_pager">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".CrimeListActivity" />
+        </activity>
     </application>
 
 </manifest>
