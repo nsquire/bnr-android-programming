@@ -1,6 +1,7 @@
 package com.nick.android.criminalIntent;
 
 import android.content.Context;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -9,16 +10,25 @@ import java.util.UUID;
  * Created by nsquire on 4/26/14.
  */
 public class CrimeLab {
+    private static final String TAG = "CrimeLab";
+    private static final String FILENAME = "crimes.json";
     private static CrimeLab sCrimeLab;
-
+    private CriminalIntentJSONSerializer mCriminalIntentJSONSerializer;
     private ArrayList<Crime> mCrimes;
     private Context mAppContext;
 
     private CrimeLab(Context context) {
         mAppContext = context;
-        mCrimes = new ArrayList<Crime>();
+        mCriminalIntentJSONSerializer = new CriminalIntentJSONSerializer(mAppContext, FILENAME);
 
-        // Temp
+        try {
+            mCrimes = mCriminalIntentJSONSerializer.loadCrimes();
+        } catch (Exception e) {
+            mCrimes = new ArrayList<Crime>();
+            Log.d(TAG, "Error loading crimes: ", e);
+        }
+
+        // To create a set of random crimes for testing
 //        for (int i = 0; i < 100; i++) {
 //            Crime c = new Crime();
 //            c.setTitle("Crime #" + i);
@@ -50,5 +60,16 @@ public class CrimeLab {
 
     public void addCrime(Crime crime) {
         mCrimes.add(crime);
+    }
+
+    public boolean saveCrimes() {
+        try {
+            mCriminalIntentJSONSerializer.saveCrimes(mCrimes);
+            Log.d(TAG, "Crimes saved to a file");
+            return true;
+        } catch (Exception exception) {
+            Log.e(TAG, "Error saving crimes: ", exception);
+            return false;
+        }
     }
 }
