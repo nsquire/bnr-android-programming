@@ -12,6 +12,8 @@ import android.support.v4.app.NavUtils;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
@@ -82,7 +84,7 @@ public class CrimeFragment extends Fragment {
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(final LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_crime, container, false);
@@ -132,6 +134,43 @@ public class CrimeFragment extends Fragment {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 // Set the crime's solved property
                 mCrime.setSolved(isChecked);
+            }
+        });
+
+        // Long-press to delete crime
+        v.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                android.view.ActionMode actionMode = getActivity().startActionMode(new android.view.ActionMode.Callback() {
+                    @Override
+                    public boolean onCreateActionMode(android.view.ActionMode mode, Menu menu) {
+                        MenuInflater menuInflater = mode.getMenuInflater();
+                        menuInflater.inflate(R.menu.crime_list_item_context, menu);
+                        return true;
+                    }
+
+                    @Override
+                    public boolean onPrepareActionMode(android.view.ActionMode mode, Menu menu) {
+                        // Required, but not used in this implementation
+                        return false;
+                    }
+
+                    @Override
+                    public boolean onActionItemClicked(android.view.ActionMode mode, MenuItem item) {
+                        CrimeLab crimeLab = CrimeLab.getInstance(getActivity());
+                        crimeLab.deleteCrime(mCrime);
+                        mode.finish();
+                        getActivity().finish();
+                        return true;
+                    }
+
+                    @Override
+                    public void onDestroyActionMode(android.view.ActionMode mode) {
+                        // Required, but not used in this implementation
+                    }
+                });
+
+                return false;
             }
         });
 
