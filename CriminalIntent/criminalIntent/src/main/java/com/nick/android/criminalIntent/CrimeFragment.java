@@ -11,6 +11,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.NavUtils;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -138,41 +139,46 @@ public class CrimeFragment extends Fragment {
         });
 
         // Long-press to delete crime
-        v.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                android.view.ActionMode actionMode = getActivity().startActionMode(new android.view.ActionMode.Callback() {
-                    @Override
-                    public boolean onCreateActionMode(android.view.ActionMode mode, Menu menu) {
-                        MenuInflater menuInflater = mode.getMenuInflater();
-                        menuInflater.inflate(R.menu.crime_list_item_context, menu);
-                        return true;
-                    }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
+            // Use floating context menus on Froyo and Gingerbread
+            registerForContextMenu(v);
+        } else {
+            v.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    android.view.ActionMode actionMode = getActivity().startActionMode(new android.view.ActionMode.Callback() {
+                        @Override
+                        public boolean onCreateActionMode(android.view.ActionMode mode, Menu menu) {
+                            MenuInflater menuInflater = mode.getMenuInflater();
+                            menuInflater.inflate(R.menu.crime_list_item_context, menu);
+                            return true;
+                        }
 
-                    @Override
-                    public boolean onPrepareActionMode(android.view.ActionMode mode, Menu menu) {
-                        // Required, but not used in this implementation
-                        return false;
-                    }
+                        @Override
+                        public boolean onPrepareActionMode(android.view.ActionMode mode, Menu menu) {
+                            // Required, but not used in this implementation
+                            return false;
+                        }
 
-                    @Override
-                    public boolean onActionItemClicked(android.view.ActionMode mode, MenuItem item) {
-                        CrimeLab crimeLab = CrimeLab.getInstance(getActivity());
-                        crimeLab.deleteCrime(mCrime);
-                        mode.finish();
-                        getActivity().finish();
-                        return true;
-                    }
+                        @Override
+                        public boolean onActionItemClicked(android.view.ActionMode mode, MenuItem item) {
+                            CrimeLab crimeLab = CrimeLab.getInstance(getActivity());
+                            crimeLab.deleteCrime(mCrime);
+                            mode.finish();
+                            getActivity().finish();
+                            return true;
+                        }
 
-                    @Override
-                    public void onDestroyActionMode(android.view.ActionMode mode) {
-                        // Required, but not used in this implementation
-                    }
-                });
+                        @Override
+                        public void onDestroyActionMode(android.view.ActionMode mode) {
+                            // Required, but not used in this implementation
+                        }
+                    });
 
-                return false;
-            }
-        });
+                    return false;
+                }
+            });
+        }
 
         return v;
     }
@@ -188,6 +194,24 @@ public class CrimeFragment extends Fragment {
             mCrime.setDate(date);
             updateDate();
         }
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        getActivity().getMenuInflater().inflate(R.menu.crime_list_item_context, menu);
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_item_delete_crime:
+                CrimeLab.getInstance(getActivity()).deleteCrime(mCrime);
+                getActivity().finish();
+                return true;
+        }
+
+        return super.onContextItemSelected(item);
     }
 
     private void updateDate() {
