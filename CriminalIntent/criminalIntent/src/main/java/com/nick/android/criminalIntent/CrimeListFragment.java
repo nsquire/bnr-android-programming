@@ -184,6 +184,16 @@ public class CrimeListFragment extends ListFragment {
         return super.onContextItemSelected(item);
     }
 
+    @Override
+    public void onListItemClick(ListView l, View v, int position, long id) {
+        Crime crime = ((CrimeAdapter) getListAdapter()).getItem(position);
+
+        // Start CrimeActivity
+        Intent intent = new Intent(getActivity(), CrimePagerActivity.class);
+        intent.putExtra(CrimeFragment.EXTRA_CRIME_ID, crime.getId());
+        startActivity(intent);
+    }
+
     private class CrimeAdapter extends ArrayAdapter<Crime> {
         public CrimeAdapter(ArrayList<Crime> crimes) {
             super(getActivity(), 0, crimes);
