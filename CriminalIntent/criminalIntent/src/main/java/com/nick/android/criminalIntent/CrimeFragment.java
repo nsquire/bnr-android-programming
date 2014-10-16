@@ -4,6 +4,8 @@ package com.nick.android.criminalIntent;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.hardware.Camera;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -19,6 +21,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageButton;
 
 import java.util.Date;
 import java.util.UUID;
@@ -34,6 +37,7 @@ public class CrimeFragment extends Fragment {
     private static final int REQUEST_DATE = -1;
 
     private Crime mCrime;
+    private ImageButton mPhotoButton;
     private EditText mTitleEditText;
     private Button mDateButton;
     private CheckBox mSolvedCheckBox;
@@ -82,7 +86,7 @@ public class CrimeFragment extends Fragment {
 
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(final LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_crime, container, false);
@@ -91,6 +95,26 @@ public class CrimeFragment extends Fragment {
             if (NavUtils.getParentActivityName(getActivity()) != null) {
                 getActivity().getActionBar().setDisplayHomeAsUpEnabled(true);
             }
+        }
+
+        mPhotoButton = (ImageButton) v.findViewById(R.id.crime_imageButton);
+        mPhotoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getActivity(), CrimeCameraActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        // If camera is not available, disable camera functionality
+        PackageManager packageManager = getActivity().getPackageManager();
+        boolean hasCamera = packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA) ||
+                packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_FRONT) ||
+                (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD &&
+                        Camera.getNumberOfCameras() > 0);
+
+        if (!hasCamera) {
+            mPhotoButton.setEnabled(false);
         }
 
         mTitleEditText = (EditText) v.findViewById(R.id.crimeTitle);

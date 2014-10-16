@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <!-- Screen Titles/Labels -->
     <string name="app_name">Criminal Intent</string>
     <string name="crime_title_hint">Enter a title for the crime.</string>
     <string name="crime_solved_label">Solved?</string>
@@ -10,11 +11,15 @@
     <string name="title_activity_crime_pager">Crime Pager Activity</string>
     <string name="date_picker_title">Date of crime:</string>
 
-    <!--Options Menu-->
+    <!-- Options Menu -->
     <string name="new_crime">New Crime</string>
     <string name="show_subtitle">Show Subtitle</string>
     <string name="hide_subtitle">Hide Subtitle</string>
     <string name="subtitle">If you see something, say something.</string>
     <string name="delete_crime">Delete</string>
+
+    <!-- Camera -->
+    <string name="take">Take!</string>
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 
 </resources>
