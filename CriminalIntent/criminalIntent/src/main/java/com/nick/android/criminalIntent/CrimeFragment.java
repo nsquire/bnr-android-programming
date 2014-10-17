@@ -5,6 +5,7 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.BitmapDrawable;
 import android.hardware.Camera;
 import android.os.Build;
 import android.os.Bundle;
@@ -22,6 +23,7 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 
 import java.util.Date;
 import java.util.UUID;
@@ -33,10 +35,14 @@ import java.util.UUID;
 public class CrimeFragment extends Fragment {
 
     public static final String EXTRA_CRIME_ID = "com.nick.android.criminalIntent.crime_id";
+    private static final String TAG = "CrimeFragment";
     private static final String DIALOG_DATE = "date";
-    private static final int REQUEST_DATE = -1;
+    private static final int REQUEST_DATE = 0;
+    private static final int REQUEST_PHOTO = 1;
+    private static final String DIALOG_IMAGE = "image";
 
     private Crime mCrime;
+    private ImageView mPhotoView;
     private ImageButton mPhotoButton;
     private EditText mTitleEditText;
     private Button mDateButton;
@@ -54,6 +60,12 @@ public class CrimeFragment extends Fragment {
         crimeFragment.setArguments(args);
 
         return crimeFragment;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        showPhoto();
     }
 
     @Override
@@ -84,6 +96,12 @@ public class CrimeFragment extends Fragment {
         CrimeLab.getInstance(getActivity()).saveCrimes();
     }
 
+    @Override
+    public void onStop() {
+        super.onStop();
+        PictureUtils.cleanImageView(mPhotoView);
+    }
+
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     @Override
     public View onCreateView(final LayoutInflater inflater, ViewGroup container,
@@ -97,12 +115,27 @@ public class CrimeFragment extends Fragment {
             }
         }
 
+        mPhotoView = (ImageView) v.findViewById(R.id.crime_imageView);
+        mPhotoView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Photo photo = mCrime.getPhoto();
+                if (photo == null) {
+                    return;
+                }
+
+                FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
+                String path = getActivity().getFileStreamPath(photo.getFilename()).getAbsolutePath();
+                ImageFragment.newInstance(path).show(fragmentManager, DIALOG_IMAGE);
+            }
+        });
+
         mPhotoButton = (ImageButton) v.findViewById(R.id.crime_imageButton);
         mPhotoButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(getActivity(), CrimeCameraActivity.class);
-                startActivity(intent);
+                startActivityForResult(intent, REQUEST_PHOTO);
             }
         });
 
@@ -172,6 +205,14 @@ public class CrimeFragment extends Fragment {
             Date date = (Date) data.getSerializableExtra(DatePickerFragment.EXTRA_DATE);
             mCrime.setDate(date);
             updateDate();
+        } else if (requestCode == REQUEST_PHOTO) {
+            // Create a new Photo object and attach it to the crime
+            String filename = data.getStringExtra(CrimeCameraFragment.EXTRA_PHOTO_FILENAME);
+            if (filename != null) {
+                Photo photo = new Photo(filename);
+                mCrime.setPhoto(photo);
+                showPhoto();
+            }
         }
     }
 
@@ -179,4 +220,14 @@ public class CrimeFragment extends Fragment {
         mDateButton.setText(mCrime.getDate().toString());
     }
 
+    private void showPhoto() {
+        // (Re)set the image button's image based on our photo
+        Photo photo = mCrime.getPhoto();
+        BitmapDrawable bitmapDrawable = null;
+        if (photo != null) {
+            String path = getActivity().getFileStreamPath(photo.getFilename()).getAbsolutePath();
+            bitmapDrawable = PictureUtils.getScaledDrawable(getActivity(), path);
+        }
+        mPhotoView.setImageDrawable(bitmapDrawable);
+    }
 }
