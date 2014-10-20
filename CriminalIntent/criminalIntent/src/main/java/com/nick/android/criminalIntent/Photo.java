@@ -3,13 +3,11 @@ package com.nick.android.criminalIntent;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-/**
- * Created by nsquire on 10/17/14.
- */
 public class Photo {
     private static final String JSON_FILENAME = "filename";
 
     private String mFilename;
+    private int mRotation;
 
     public Photo(String filename) {
         mFilename = filename;
@@ -27,5 +25,13 @@ public class Photo {
 
     public String getFilename() {
         return mFilename;
+    }
+
+    public int getRotation() {
+        return mRotation;
+    }
+
+    public void setRotation(int mRotation) {
+        this.mRotation = mRotation;
     }
 }

@@ -3,6 +3,7 @@ package com.nick.android.criminalIntent;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.BitmapDrawable;
@@ -14,10 +15,14 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.NavUtils;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
+import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.view.animation.RotateAnimation;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -126,7 +131,8 @@ public class CrimeFragment extends Fragment {
 
                 FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
                 String path = getActivity().getFileStreamPath(photo.getFilename()).getAbsolutePath();
-                ImageFragment.newInstance(path).show(fragmentManager, DIALOG_IMAGE);
+                ImageFragment.newInstance(path, photo.getRotation()).show(fragmentManager, DIALOG_IMAGE);
+
             }
         });
 
@@ -208,8 +214,14 @@ public class CrimeFragment extends Fragment {
         } else if (requestCode == REQUEST_PHOTO) {
             // Create a new Photo object and attach it to the crime
             String filename = data.getStringExtra(CrimeCameraFragment.EXTRA_PHOTO_FILENAME);
+
+            // Determine device orientation, have to do this here since camera activity is locked in landscape
+            Display display = ((WindowManager) getActivity().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+            int rotation = display.getRotation();
+
             if (filename != null) {
                 Photo photo = new Photo(filename);
+                photo.setRotation(rotation);
                 mCrime.setPhoto(photo);
                 showPhoto();
             }
@@ -227,7 +239,48 @@ public class CrimeFragment extends Fragment {
         if (photo != null) {
             String path = getActivity().getFileStreamPath(photo.getFilename()).getAbsolutePath();
             bitmapDrawable = PictureUtils.getScaledDrawable(getActivity(), path);
+
+            // Rotate picture to same orientation it was taken
+            if (Build.VERSION.SDK_INT < 11) {
+                RotateAnimation rotateAnimation = null;
+                switch (photo.getRotation()) {
+                    case Surface.ROTATION_0:
+                        rotateAnimation = new RotateAnimation(0, 90);
+                        break;
+                    case Surface.ROTATION_90:
+                        // Do nothing, keep at 0
+                        break;
+                    case Surface.ROTATION_180:
+                        rotateAnimation = new RotateAnimation(0, 90); // never hits here for Nexus 5
+                        break;
+                    case Surface.ROTATION_270:
+                        rotateAnimation = new RotateAnimation(0, 180);
+                        break;
+                }
+
+                if (rotateAnimation != null) {
+                    rotateAnimation.setDuration(100);
+                    rotateAnimation.setFillAfter(true);
+                    mPhotoView.startAnimation(rotateAnimation);
+                }
+            } else {
+                switch (photo.getRotation()) {
+                    case Surface.ROTATION_0:
+                        mPhotoView.setRotation(90);
+                        break;
+                    case Surface.ROTATION_90:
+                        mPhotoView.setRotation(0);
+                        break;
+                    case Surface.ROTATION_180:
+                        mPhotoView.setRotation(90); // never hits here for Nexus 5
+                        break;
+                    case Surface.ROTATION_270:
+                        mPhotoView.setRotation(180);
+                        break;
+                }
+            }
         }
+
         mPhotoView.setImageDrawable(bitmapDrawable);
     }
 }
