@@ -15,8 +15,13 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.NavUtils;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
+import android.view.ActionMode;
+import android.view.ContextMenu;
 import android.view.Display;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.Surface;
 import android.view.View;
@@ -132,9 +137,57 @@ public class CrimeFragment extends Fragment {
                 FragmentManager fragmentManager = getActivity().getSupportFragmentManager();
                 String path = getActivity().getFileStreamPath(photo.getFilename()).getAbsolutePath();
                 ImageFragment.newInstance(path, photo.getRotation()).show(fragmentManager, DIALOG_IMAGE);
-
             }
         });
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
+            // Use floating context menus on Froyo and Gingerbread
+            registerForContextMenu(mPhotoView);
+        } else {
+            mPhotoView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    if (mCrime.getPhoto() == null) {
+                        return false;
+                    }
+
+                    getActivity().startActionMode(new ActionMode.Callback() {
+                        @Override
+                        public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+                            MenuInflater menuInflater = mode.getMenuInflater();
+                            menuInflater.inflate(R.menu.crime_list_item_context, menu);
+                            return true;
+                        }
+
+                        @Override
+                        public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+                            // Required, but not used in this implementation
+                            return false;
+                        }
+
+                        @Override
+                        public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+                            switch (item.getItemId()) {
+                                case R.id.menu_item_delete_crime:
+                                    deleteCurrentPhoto();
+                                    mPhotoView.setImageDrawable(null);
+                                    mode.finish();
+                                    return true;
+                            }
+
+                            return false;
+                        }
+
+                        @Override
+                        public void onDestroyActionMode(ActionMode mode) {
+                            // Required, but not used in this implementation
+                        }
+                    });
+
+                    return true;
+                }
+            });
+        }
 
         mPhotoButton = (ImageButton) v.findViewById(R.id.crime_imageButton);
         mPhotoButton.setOnClickListener(new View.OnClickListener() {
@@ -220,12 +273,36 @@ public class CrimeFragment extends Fragment {
             int rotation = display.getRotation();
 
             if (filename != null) {
+                // Delete previous photo file if there is one
+                deleteCurrentPhoto();
                 Photo photo = new Photo(filename);
                 photo.setRotation(rotation);
                 mCrime.setPhoto(photo);
                 showPhoto();
             }
         }
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        if (mCrime.getPhoto() == null) {
+            return;
+        }
+
+        super.onCreateContextMenu(menu, v, menuInfo);
+        getActivity().getMenuInflater().inflate(R.menu.crime_list_item_context, menu);
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_item_delete_crime:
+                deleteCurrentPhoto();
+                mPhotoView.setImageDrawable(null);
+                return true;
+        }
+
+        return super.onContextItemSelected(item);
     }
 
     private void updateDate() {
@@ -282,5 +359,18 @@ public class CrimeFragment extends Fragment {
         }
 
         mPhotoView.setImageDrawable(bitmapDrawable);
+    }
+
+    private void deleteCurrentPhoto() {
+        if (mCrime.getPhoto() != null && !mCrime.getPhoto().getFilename().equals("")) {
+            String previousFilename = mCrime.getPhoto().getFilename();
+            Log.d(TAG, "File to delete: " + getActivity().getFilesDir() + "/" + previousFilename);
+            if (getActivity().deleteFile(previousFilename)) {
+                Log.d(TAG, "Delete success");
+            }
+        }
+
+        // Set current photo for crime to null since we just deleted the file
+        mCrime.setPhoto(null);
     }
 }
