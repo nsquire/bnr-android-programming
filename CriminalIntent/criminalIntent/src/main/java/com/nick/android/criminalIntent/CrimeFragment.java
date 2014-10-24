@@ -3,6 +3,7 @@ package com.nick.android.criminalIntent;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -56,6 +57,8 @@ public class CrimeFragment extends Fragment {
     private CheckBox mSolvedCheckBox;
     private Button mReportButton;
     private Button mSuspectButton;
+    private Button mCallButton;
+    private String mPhoneNumber;
 
     public CrimeFragment() {
         // Required empty public constructor
@@ -201,6 +204,22 @@ public class CrimeFragment extends Fragment {
             }
         });
 
+        mSuspectButton = (Button) v.findViewById(R.id.crime_suspectButton);
+        mSuspectButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(Intent.ACTION_PICK,
+                        ContactsContract.Contacts.CONTENT_URI);
+                if (isIntentSafe(intent)) {
+                    startActivityForResult(intent, REQUEST_CONTACT);
+                }
+            }
+        });
+
+        if (mCrime.getSuspect() != null) {
+            mSuspectButton.setText(mCrime.getSuspect());
+        }
+
         mReportButton = (Button) v.findViewById(R.id.crime_reportButton);
         mReportButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -217,21 +236,20 @@ public class CrimeFragment extends Fragment {
             }
         });
 
-        mSuspectButton = (Button) v.findViewById(R.id.crime_suspectButton);
-        mSuspectButton.setOnClickListener(new View.OnClickListener() {
+        mCallButton = (Button) v.findViewById(R.id.crime_callButton);
+        mCallButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(Intent.ACTION_PICK,
-                        ContactsContract.Contacts.CONTENT_URI);
-                if (isIntentSafe(intent)) {
-                    startActivityForResult(intent, REQUEST_CONTACT);
+
+                if (mCrime.getSuspect() != null) {
+                    Intent intent = new Intent(Intent.ACTION_DIAL,
+                            Uri.parse("tel:" + getPhoneNumberForContact(mCrime.getSuspect())));
+                    if (isIntentSafe(intent)) {
+                        startActivity(intent);
+                    }
                 }
             }
         });
-
-        if (mCrime.getSuspect() != null) {
-            mSuspectButton.setText(mCrime.getSuspect());
-        }
 
         return v;
     }
@@ -261,31 +279,70 @@ public class CrimeFragment extends Fragment {
                 mCrime.setPhoto(photo);
                 showPhoto();
             }
-        } else if (resultCode == REQUEST_CONTACT) {
+        } else if (requestCode == REQUEST_CONTACT) {
             Uri contactUri = data.getData();
 
             // Specify which fields you want your query to return values for
             String[] queryFields = new String[]{
+                    ContactsContract.Contacts._ID,
                     ContactsContract.Contacts.DISPLAY_NAME
             };
 
             // Perform your query - the contactsUri is like a "where" clause here
-            Cursor cursor = getActivity().getContentResolver().query(contactUri, queryFields, null, null, null);
+            Cursor contact = getActivity().getContentResolver().query(
+                    contactUri,
+                    queryFields,
+                    null,
+                    null,
+                    null);
 
             // Double-check that you actually got results
-            if (cursor.getCount() == 0) {
-                cursor.close();
+            if (contact.getCount() == 0) {
+                contact.close();
                 return;
             }
 
-            // Pull out the first column of the first row of data -
+            // Pull out the display name column of the first row of data -
             // that is your suspect's name
-            cursor.moveToFirst();
-            String suspect = cursor.getString(0);
+            contact.moveToFirst();
+            String suspect = contact.getString(contact.getColumnIndex(
+                    ContactsContract.Contacts.DISPLAY_NAME));
             mCrime.setSuspect(suspect);
             mSuspectButton.setText(suspect);
-            cursor.close();
+
+            contact.close();
         }
+    }
+
+    private String getPhoneNumberForContact(String displayName) {
+        String phoneNumber = null;
+        ContentResolver contentResolver = getActivity().getContentResolver();
+        Cursor cursor = contentResolver.query(
+                ContactsContract.Contacts.CONTENT_URI,
+                null,
+                "DISPLAY_NAME = '" + displayName + "'",
+                null,
+                null);
+
+        if (cursor.moveToFirst()) {
+            String contactId = cursor.getString(cursor.getColumnIndex(ContactsContract.Contacts._ID));
+            Cursor phoneNumbers = contentResolver.query(
+                    ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                    null,
+                    ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = " + contactId,
+                    null,
+                    null);
+
+            while (phoneNumbers.moveToNext()) {
+                phoneNumber = phoneNumbers.getString(
+                        phoneNumbers.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+            }
+
+            phoneNumbers.close();
+        }
+        cursor.close();
+
+        return phoneNumber;
     }
 
     private void updateDate() {
