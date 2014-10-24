@@ -261,7 +261,7 @@ public class CrimeFragment extends Fragment {
                 mCrime.setPhoto(photo);
                 showPhoto();
             }
-        } else if (resultCode == REQUEST_CONTACT) {
+        } else if (requestCode == REQUEST_CONTACT) {
             Uri contactUri = data.getData();
 
             // Specify which fields you want your query to return values for
