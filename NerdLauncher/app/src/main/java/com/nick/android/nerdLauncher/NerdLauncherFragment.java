@@ -64,7 +64,6 @@ public class NerdLauncherFragment extends Fragment implements AbsListView.OnItem
         });
 
         // Change Adapter to display your content
-
         mAppsArrayAdapter = new ArrayAdapter<ResolveInfo>(getActivity(), android.R.layout.simple_list_item_1, activities) {
             public View getView(int position, View convertView, ViewGroup parent) {
                 PackageManager packageManager = getActivity().getPackageManager();
@@ -77,8 +76,6 @@ public class NerdLauncherFragment extends Fragment implements AbsListView.OnItem
                 return v;
             }
         };
-
-
     }
 
     @Override
