@@ -7,6 +7,6 @@ public class NerdLauncherActivity extends FragmentHostingActivity {
 
     @Override
     protected Fragment createFragment() {
-        return new NerdLauncherFragment();
+        return new RunningTasksFragment();
     }
 }

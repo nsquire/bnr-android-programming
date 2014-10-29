@@ -1,5 +1,9 @@
 package com.nick.android.nerdLauncher;
 
+
+import android.app.Activity;
+import android.app.ActivityManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
@@ -21,8 +25,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class NerdLauncherFragment extends Fragment implements AbsListView.OnItemClickListener {
-    private static final String TAG = "NerdLauncherFragment";
+public class RunningTasksFragment extends Fragment implements AbsListView.OnItemClickListener {
+    private static final String TAG = "RunningTasksFragment";
 
     /**
      * The fragment's ListView/GridView.
@@ -39,33 +43,29 @@ public class NerdLauncherFragment extends Fragment implements AbsListView.OnItem
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
      */
-    public NerdLauncherFragment() {
+    public RunningTasksFragment() {
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Intent startupIntent = new Intent(Intent.ACTION_MAIN);
-        startupIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+        ActivityManager activityManager = (ActivityManager) getActivity().getSystemService(Activity.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningTaskInfo> runningTasks = activityManager.getRunningTasks(100);
 
-        PackageManager packageManager = getActivity().getPackageManager();
-        List<ResolveInfo> activities = packageManager.queryIntentActivities(startupIntent, 0);
+        Log.i(TAG, "I've found " + runningTasks.size() + " tasks");
 
-        Log.i(TAG, "I've found " + activities.size() + " activities");
-
-        Collections.sort(activities, new Comparator<ResolveInfo>() {
+        Collections.sort(runningTasks, new Comparator<ActivityManager.RunningTaskInfo>() {
             @Override
-            public int compare(ResolveInfo lhs, ResolveInfo rhs) {
-                PackageManager packageManager = getActivity().getPackageManager();
+            public int compare(ActivityManager.RunningTaskInfo lhs, ActivityManager.RunningTaskInfo rhs) {
                 return String.CASE_INSENSITIVE_ORDER.compare(
-                        lhs.loadLabel(packageManager).toString(),
-                        rhs.loadLabel(packageManager).toString());
+                        lhs.baseActivity.getClassName(),
+                        rhs.baseActivity.getClassName());
             }
         });
 
         // Change Adapter to display your content
-        mAppsArrayAdapter = new ArrayAdapter<ResolveInfo>(getActivity(), R.layout.list_app_item, activities) {
+        mAppsArrayAdapter = new ArrayAdapter<ActivityManager.RunningTaskInfo>(getActivity(), R.layout.list_app_item, runningTasks) {
             public View getView(int position, View convertView, ViewGroup parent) {
 
                 View v = convertView;
@@ -73,16 +73,11 @@ public class NerdLauncherFragment extends Fragment implements AbsListView.OnItem
                     v = View.inflate(getActivity(), R.layout.list_app_item, null);
                 }
 
-                ResolveInfo resolveInfo = getItem(position);
-                PackageManager packageManager = getActivity().getPackageManager();
+                ActivityManager.RunningTaskInfo runningTask = getItem(position);
 
-                // Set the icon
-                ImageView imageView = (ImageView) v.findViewById(R.id.appIcon);
-                imageView.setImageDrawable(resolveInfo.loadIcon(packageManager));
-
-                // Set the app name
+                // Set the task name
                 TextView textView = (TextView) v.findViewById(R.id.appName);
-                textView.setText(resolveInfo.loadLabel(packageManager));
+                textView.setText(runningTask.baseActivity.getClassName());
 
                 return v;
             }
@@ -106,17 +101,14 @@ public class NerdLauncherFragment extends Fragment implements AbsListView.OnItem
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        ResolveInfo resolveInfo = (ResolveInfo) parent.getAdapter().getItem(position);
-        ActivityInfo activityInfo = resolveInfo.activityInfo;
+        ActivityManager.RunningTaskInfo runningTask = (ActivityManager.RunningTaskInfo) parent.getAdapter().getItem(position);
 
-        if (null == activityInfo) {
+        if (null == runningTask) {
             return;
         }
 
-        Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.setClassName(activityInfo.packageName, activityInfo.name);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
+        ActivityManager activityManager = (ActivityManager) getActivity().getSystemService(Context.ACTIVITY_SERVICE);
+        activityManager.moveTaskToFront(runningTask.id, ActivityManager.MOVE_TASK_WITH_HOME);
     }
 
     /**
