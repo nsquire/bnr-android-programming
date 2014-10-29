@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableRow>
+
+    <Button style="@style/RemoteButton" />
+
+    <Button style="@style/RemoteButton" />
+
+    <Button style="@style/RemoteButton" />
+
+</TableRow>
