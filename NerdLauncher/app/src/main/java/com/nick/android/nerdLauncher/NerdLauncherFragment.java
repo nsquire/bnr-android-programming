@@ -13,6 +13,7 @@ import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.TextView;
 
@@ -64,15 +65,25 @@ public class NerdLauncherFragment extends Fragment implements AbsListView.OnItem
         });
 
         // Change Adapter to display your content
-        mAppsArrayAdapter = new ArrayAdapter<ResolveInfo>(getActivity(), android.R.layout.simple_list_item_1, activities) {
+        mAppsArrayAdapter = new ArrayAdapter<ResolveInfo>(getActivity(), R.layout.list_app_item, activities) {
             public View getView(int position, View convertView, ViewGroup parent) {
-                PackageManager packageManager = getActivity().getPackageManager();
-                View v = super.getView(position, convertView, parent);
-                // Documentation says that simple_list_item_1 is a TextView,
-                // so cast it so that you can set it text value
-                TextView textView = (TextView) v;
+
+                View v = convertView;
+                if (null == v) {
+                    v = View.inflate(getActivity(), R.layout.list_app_item, null);
+                }
+
                 ResolveInfo resolveInfo = getItem(position);
+                PackageManager packageManager = getActivity().getPackageManager();
+
+                // Set the icon
+                ImageView imageView = (ImageView) v.findViewById(R.id.appIcon);
+                imageView.setImageDrawable(resolveInfo.loadIcon(packageManager));
+
+                // Set the app name
+                TextView textView = (TextView) v.findViewById(R.id.appName);
                 textView.setText(resolveInfo.loadLabel(packageManager));
+
                 return v;
             }
         };
