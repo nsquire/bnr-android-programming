@@ -56,6 +56,10 @@ public class FlickrFetchr {
     }
 
     public ArrayList<GalleryItem> fetchItems() {
+        return fetchItems(1, 100);
+    }
+
+    public ArrayList<GalleryItem> fetchItems(int page, int numberOfPhotos) {
         ArrayList<GalleryItem> items = new ArrayList<GalleryItem>();
 
         try {
@@ -63,6 +67,8 @@ public class FlickrFetchr {
                     .appendQueryParameter("method", METHOD_GET_RECENT)
                     .appendQueryParameter("api_key", API_KEY)
                     .appendQueryParameter(PARAM_EXTRAS, EXTRA_SMALL_URL)
+                    .appendQueryParameter("per_page", String.valueOf(numberOfPhotos))
+                    .appendQueryParameter("page", String.valueOf(page))
                     .build().toString();
             String xmlString = getUrl(url);
             Log.i(TAG, "Received xml: " + xmlString);

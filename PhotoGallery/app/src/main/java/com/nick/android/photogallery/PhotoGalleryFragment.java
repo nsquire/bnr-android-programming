@@ -27,7 +27,7 @@ public class PhotoGalleryFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
-        new FetchItemTask().execute();
+        new FetchItemTask().execute(1, 100);
     }
 
     @Override
@@ -36,6 +36,13 @@ public class PhotoGalleryFragment extends Fragment {
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_photo_gallery, container, false);
         mGridView = (GridView) v.findViewById(R.id.gridView);
+        mGridView.setOnScrollListener(new EndlessScrollListener() {
+            @Override
+            public void onLoadMore(int page, int totalItemsCount) {
+                new FetchItemTask().execute(page, 100);
+            }
+        });
+
         setupAdapter();
 
         return v;
@@ -55,17 +62,27 @@ public class PhotoGalleryFragment extends Fragment {
         }
     }
 
-    private class FetchItemTask extends AsyncTask<Void, Void, ArrayList<GalleryItem>> {
+    private class FetchItemTask extends AsyncTask<Integer, Void, ArrayList<GalleryItem>> {
 
         @Override
-        protected ArrayList<GalleryItem> doInBackground(Void... params) {
-            return new FlickrFetchr().fetchItems();
+        protected ArrayList<GalleryItem> doInBackground(Integer... params) {
+            return new FlickrFetchr().fetchItems(params[0], params[1]);
         }
 
         @Override
         protected void onPostExecute(ArrayList<GalleryItem> items) {
-            mItems = items;
-            setupAdapter();
+            if (mItems == null) {
+                // First time, setup initial dataset
+                mItems = items;
+                setupAdapter();
+            } else {
+                // Add additional items to the dataset
+                for (GalleryItem item : items) {
+                    mItems.add(item);
+                }
+
+                ((ArrayAdapter<GalleryItem>) mGridView.getAdapter()).notifyDataSetChanged();
+            }
         }
     }
 
