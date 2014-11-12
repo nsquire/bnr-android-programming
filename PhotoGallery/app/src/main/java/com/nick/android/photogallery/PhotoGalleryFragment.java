@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
@@ -23,6 +24,8 @@ public class PhotoGalleryFragment extends Fragment {
     GridView mGridView;
     ArrayList<GalleryItem> mItems;
     ThumbnailDownloader<ImageView> mThumbnailThread;
+    ThumbnailDownloader<ImageView> mPreLoadThumbnailThread;
+    private boolean mUserScrolled = true; // Set to true to start one iteration of pre-loading images on startup
 
     public PhotoGalleryFragment() {
         // Required empty public constructor
@@ -35,6 +38,7 @@ public class PhotoGalleryFragment extends Fragment {
         new FetchItemTask().execute();
 
         mThumbnailThread = new ThumbnailDownloader<ImageView>(new Handler());
+        mThumbnailThread.setPriority(6);
         mThumbnailThread.setListener(new ThumbnailDownloader.Listener<ImageView>() {
             @Override
             public void onThumbnailDownloaded(ImageView imageView, Bitmap thumbnail) {
@@ -45,7 +49,13 @@ public class PhotoGalleryFragment extends Fragment {
         });
         mThumbnailThread.start();
         mThumbnailThread.getLooper();
-        Log.i(TAG, "Background thread started");
+
+        mPreLoadThumbnailThread = new ThumbnailDownloader<ImageView>(null);
+        mPreLoadThumbnailThread.setPriority(5);
+        mPreLoadThumbnailThread.start();
+        mPreLoadThumbnailThread.getLooper();
+
+        Log.i(TAG, "Background threads started");
     }
 
     @Override
@@ -54,6 +64,46 @@ public class PhotoGalleryFragment extends Fragment {
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_photo_gallery, container, false);
         mGridView = (GridView) v.findViewById(R.id.gridView);
+        mGridView.setOnScrollListener(new AbsListView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(AbsListView view, int scrollState) {
+                if (scrollState == AbsListView.OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
+                    mUserScrolled = true;
+                }
+            }
+
+            @Override
+            public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                if (visibleItemCount != 0) {
+
+                    if (mUserScrolled == true) {
+
+                        Log.i(TAG, "firstVisibleItem: " + String.valueOf(firstVisibleItem));
+                        Log.i(TAG, "visibleItemCount: " + String.valueOf(visibleItemCount));
+                        Log.i(TAG, "totalItemCount: " + String.valueOf(totalItemCount));
+                        Log.i(TAG, "pre-loading...");
+
+                        // Pre-load first 10 images
+                        for (int i = firstVisibleItem - 1; i >= firstVisibleItem - 10; i--) {
+                            if (i >= 0) {
+                                mPreLoadThumbnailThread.queuePreLoad(mItems.get(i).getUrl());
+                            }
+                        }
+
+                        // Pre-load next 10 images
+                        for (int i = firstVisibleItem + visibleItemCount + 1; i <= firstVisibleItem + visibleItemCount + 10; i++) {
+                            if (i <= totalItemCount) {
+                                mPreLoadThumbnailThread.queuePreLoad(mItems.get(i).getUrl());
+                            }
+                        }
+
+                        // Reset flag to false, need this flag since onScroll is invoked continuously,
+                        // whether scrolling or not
+                        mUserScrolled = false;
+                    }
+                }
+            }
+        });
         setupAdapter();
 
         return v;

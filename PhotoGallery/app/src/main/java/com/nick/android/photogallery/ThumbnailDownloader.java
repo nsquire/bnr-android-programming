@@ -24,6 +24,7 @@ public class ThumbnailDownloader<Token> extends HandlerThread {
     private Listener<Token> mListener;
 
     private LruCache<String, Bitmap> mMemoryCache;
+    private static final int MESSAGE_PRELOAD_DOWNLOAD = 1;
 
     public interface Listener<Token> {
         void onThumbnailDownloaded(Token token, Bitmap thumbnail);
@@ -64,6 +65,13 @@ public class ThumbnailDownloader<Token> extends HandlerThread {
                 .sendToTarget();
     }
 
+    public void queuePreLoad(String url) {
+        Log.i(TAG, "Got an pre-load URL: " + url);
+
+        mHandler.obtainMessage(MESSAGE_PRELOAD_DOWNLOAD, url)
+                .sendToTarget();
+    }
+
     @SuppressLint("HandlerLeak")
     @Override
     protected void onLooperPrepared() {
@@ -73,8 +81,13 @@ public class ThumbnailDownloader<Token> extends HandlerThread {
                 if (msg.what == MESSAGE_DOWNLOAD) {
                     @SuppressWarnings("unchecked")
                     Token token = (Token) msg.obj;
-                    Log.i(TAG, "Got a request for url: " + requestMap.get(token));
+                    Log.i(TAG, "Got a download request for url: " + requestMap.get(token));
                     handleRequest(token);
+                } else if (msg.what == MESSAGE_PRELOAD_DOWNLOAD) {
+                    @SuppressWarnings("unchecked")
+                    String url = (String) msg.obj;
+                    Log.i(TAG, "Got a pre-load download request for url: " + url);
+                    handlePreLoadRequest(url);
                 }
 
                 super.handleMessage(msg);
@@ -118,8 +131,28 @@ public class ThumbnailDownloader<Token> extends HandlerThread {
         }
     }
 
+    private void handlePreLoadRequest(final String url) {
+        try {
+            if (url == null) {
+                return;
+            }
+
+            if (getBitmapFromMemCache(url) != null) {
+                return;
+            }
+
+            byte[] bitmapBytes = new FlickrFetchr().getUrlBytes(url);
+            final Bitmap bitmap = BitmapFactory.decodeByteArray(bitmapBytes, 0, bitmapBytes.length);
+            addBitmapToMemoryCache(url, bitmap);
+            Log.i(TAG, "Pre-load bitmap created and cached");
+        } catch (IOException e) {
+            Log.e(TAG, "Error downloading image", e);
+        }
+    }
+
     public void clearQueue() {
         mHandler.removeMessages(MESSAGE_DOWNLOAD);
+        mHandler.removeMessages(MESSAGE_PRELOAD_DOWNLOAD);
         requestMap.clear();
     }
 
