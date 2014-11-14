@@ -39,7 +39,7 @@ public abstract class FragmentHostingActivity extends FragmentActivity {
 
         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
             String query = intent.getStringExtra(SearchManager.QUERY);
-            Log.i(TAG, "Recieved a new search query: " + query);
+            Log.i(TAG, "Received a new search query: " + query);
 
             PreferenceManager.getDefaultSharedPreferences(this)
                     .edit()

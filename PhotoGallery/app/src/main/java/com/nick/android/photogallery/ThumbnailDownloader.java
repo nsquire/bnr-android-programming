@@ -1,6 +1,7 @@
 package com.nick.android.photogallery;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Handler;
@@ -21,6 +22,7 @@ public class ThumbnailDownloader<Token> extends HandlerThread {
     Map<Token, String> requestMap = Collections.synchronizedMap(new HashMap<Token, String>());
     Handler mResponseHandler;
     Listener<Token> mListener;
+    Context mContext;
 
     public interface Listener<Token> {
         void onThumbnailDownloaded(Token token, Bitmap thumbnail);
@@ -30,8 +32,9 @@ public class ThumbnailDownloader<Token> extends HandlerThread {
         mListener = listener;
     }
 
-    public ThumbnailDownloader(Handler responseHandler) {
+    public ThumbnailDownloader(Context context, Handler responseHandler) {
         super(TAG);
+        mContext = context;
         mResponseHandler = responseHandler;
     }
 
@@ -69,7 +72,7 @@ public class ThumbnailDownloader<Token> extends HandlerThread {
                 return;
             }
 
-            byte[] bitmapBytes = new FlickrFetchr().getUrlBytes(url);
+            byte[] bitmapBytes = new FlickrFetchr(mContext).getUrlBytes(url);
             final Bitmap bitmap = BitmapFactory.decodeByteArray(bitmapBytes, 0, bitmapBytes.length);
             Log.i(TAG, "Bitmap created");
 

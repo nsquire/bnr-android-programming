@@ -22,9 +22,11 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.SearchView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 
@@ -49,7 +51,7 @@ public class PhotoGalleryFragment extends Fragment {
 
         updateItems();
 
-        mThumbnailThread = new ThumbnailDownloader<ImageView>(new Handler());
+        mThumbnailThread = new ThumbnailDownloader<ImageView>(getActivity(), new Handler());
         mThumbnailThread.setListener(new ThumbnailDownloader.Listener<ImageView>() {
             @Override
             public void onThumbnailDownloaded(ImageView imageView, Bitmap thumbnail) {
@@ -116,9 +118,9 @@ public class PhotoGalleryFragment extends Fragment {
                     .getString(FlickrFetchr.PREF_SEARCH_QUERY, null);
 
             if (query != null) {
-                return new FlickrFetchr().search(query);
+                return new FlickrFetchr(getActivity()).search(query);
             } else {
-                return new FlickrFetchr().fetchItems();
+                return new FlickrFetchr(getActivity()).fetchItems();
             }
         }
 
@@ -126,6 +128,13 @@ public class PhotoGalleryFragment extends Fragment {
         protected void onPostExecute(ArrayList<GalleryItem> items) {
             mItems = items;
             setupAdapter();
+
+            String queryTotal = PreferenceManager.getDefaultSharedPreferences(getActivity())
+                    .getString(FlickrFetchr.PREF_SEARCH_QUERY_TOTAL, null);
+
+            if (queryTotal != null) {
+                Toast.makeText(getActivity(), queryTotal, Toast.LENGTH_SHORT).show();
+            }
         }
     }
 
@@ -165,6 +174,14 @@ public class PhotoGalleryFragment extends Fragment {
             SearchableInfo searchableInfo = searchManager.getSearchableInfo(componentName);
 
             searchView.setSearchableInfo(searchableInfo);
+
+            String query = PreferenceManager.getDefaultSharedPreferences(getActivity()).getString(FlickrFetchr.PREF_SEARCH_QUERY, null);
+            if (query != null) {
+                int searchEditTextResId = getResources().getIdentifier("android:id/search_src_text", null, null);
+                EditText searchEditText = (EditText) searchView.findViewById(searchEditTextResId);
+                searchEditText.setText(query);
+                searchEditText.selectAll();
+            }
         }
     }
 
@@ -172,7 +189,9 @@ public class PhotoGalleryFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_item_search:
-                getActivity().onSearchRequested();
+                String query = PreferenceManager.getDefaultSharedPreferences(getActivity()).getString(FlickrFetchr.PREF_SEARCH_QUERY, null);
+                getActivity().startSearch(query, true, null, false);
+
                 return true;
             case R.id.menu_item_clear:
                 PreferenceManager.getDefaultSharedPreferences(getActivity())
@@ -180,6 +199,7 @@ public class PhotoGalleryFragment extends Fragment {
                         .putString(FlickrFetchr.PREF_SEARCH_QUERY, null)
                         .commit();
                 updateItems();
+
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

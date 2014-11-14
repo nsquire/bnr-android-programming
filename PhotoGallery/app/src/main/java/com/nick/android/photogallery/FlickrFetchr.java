@@ -1,7 +1,9 @@
 package com.nick.android.photogallery;
 
 
+import android.content.Context;
 import android.net.Uri;
+import android.preference.PreferenceManager;
 import android.util.Log;
 
 import org.xmlpull.v1.XmlPullParser;
@@ -19,6 +21,7 @@ import java.util.ArrayList;
 public class FlickrFetchr {
     public static final String TAG = "FlickrFetchr";
     public static final String PREF_SEARCH_QUERY = "searchQuery";
+    public static final String PREF_SEARCH_QUERY_TOTAL = "searchQueryTotal";
 
     private static final String ENDPOINT = "https://api.flickr.com/services/rest/";
     private static final String API_KEY = "ee67d0449f334c108e3adb5d9d811373";
@@ -29,6 +32,12 @@ public class FlickrFetchr {
     private static final String PARAM_TEXT = "text";
 
     private static final String XML_PHOTO = "photo";
+
+    private Context mContext;
+
+    public FlickrFetchr(Context context) {
+        mContext = context;
+    }
 
     byte[] getUrlBytes(String urlSpec) throws IOException {
         URL url = new URL(urlSpec);
@@ -103,6 +112,14 @@ public class FlickrFetchr {
         int eventType = parser.next();
 
         while (eventType != XmlPullParser.END_DOCUMENT) {
+            if (eventType == XmlPullParser.START_TAG && "photos".equals(parser.getName())) {
+                String total = parser.getAttributeValue(null, "total");
+                PreferenceManager.getDefaultSharedPreferences(mContext)
+                        .edit()
+                        .putString(PREF_SEARCH_QUERY_TOTAL, total)
+                        .commit();
+            }
+
             if (eventType == XmlPullParser.START_TAG && XML_PHOTO.equals(parser.getName())) {
                 String id = parser.getAttributeValue(null, "id");
                 String caption = parser.getAttributeValue(null, "title");
@@ -118,4 +135,6 @@ public class FlickrFetchr {
             eventType = parser.next();
         }
     }
+
+
 }
