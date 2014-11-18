@@ -17,6 +17,8 @@ import android.widget.Toast;
 public class RunFragment extends Fragment {
     private static final String TAG = "RunFragment";
     private static final String ARG_RUN_ID = "RUN_ID";
+    private static final int LOAD_RUN = 0;
+    private static final int LOAD_LOCATION = 1;
 
     private BroadcastReceiver mLocationReceiver = new LocationReceiver() {
 
@@ -71,8 +73,9 @@ public class RunFragment extends Fragment {
         if (args != null) {
             long runId = args.getLong(ARG_RUN_ID, -1);
             if (runId != -1) {
-                mRun = mRunManager.getRun(runId);
-                mLastLocation = mRunManager.getLastLocationForRun(runId);
+                android.support.v4.app.LoaderManager loaderManager = getLoaderManager();
+                loaderManager.initLoader(LOAD_RUN, args, new RunLoaderCallbacks());
+                loaderManager.initLoader(LOAD_LOCATION, args, new LocationLoaderCallbacks());
             }
         }
     }
@@ -144,6 +147,45 @@ public class RunFragment extends Fragment {
 
         mStartButton.setEnabled(!started);
         mStopButton.setEnabled(started && trackingThisRun);
+    }
+
+    private class RunLoaderCallbacks implements android.support.v4.app.LoaderManager.LoaderCallbacks<Run> {
+
+
+        @Override
+        public android.support.v4.content.Loader<Run> onCreateLoader(int i, Bundle bundle) {
+            return new RunLoader(getActivity(), bundle.getLong(ARG_RUN_ID));
+        }
+
+        @Override
+        public void onLoadFinished(android.support.v4.content.Loader<Run> runLoader, Run run) {
+            mRun = run;
+            updateUI();
+        }
+
+        @Override
+        public void onLoaderReset(android.support.v4.content.Loader<Run> runLoader) {
+            // Do nothing
+        }
+    }
+
+    private class LocationLoaderCallbacks implements android.support.v4.app.LoaderManager.LoaderCallbacks<Location> {
+
+        @Override
+        public android.support.v4.content.Loader<Location> onCreateLoader(int i, Bundle bundle) {
+            return new LastLocationLoader(getActivity(), bundle.getLong(ARG_RUN_ID));
+        }
+
+        @Override
+        public void onLoadFinished(android.support.v4.content.Loader<Location> locationLoader, Location location) {
+            mLastLocation = location;
+            updateUI();
+        }
+
+        @Override
+        public void onLoaderReset(android.support.v4.content.Loader<Location> locationLoader) {
+            // Do nothing
+        }
     }
 
 }
