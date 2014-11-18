@@ -3,6 +3,7 @@ package com.nick.android.runtracker;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
 import android.content.IntentFilter;
 import android.location.Location;
 import android.os.Bundle;
@@ -52,6 +53,7 @@ public class RunFragment extends Fragment {
     private TextView mDurationTextView;
     private Button mStartButton;
     private Button mStopButton;
+    private Button mMapButton;
 
     public static RunFragment newInstance(long runId) {
         Bundle args = new Bundle();
@@ -81,7 +83,7 @@ public class RunFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(final LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_run, container, false);
 
@@ -110,6 +112,16 @@ public class RunFragment extends Fragment {
             public void onClick(View v) {
                 mRunManager.stopRun();
                 updateUI();
+            }
+        });
+
+        mMapButton = (Button) view.findViewById(R.id.run_mapButton);
+        mMapButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getActivity(), RunMapActivity.class);
+                intent.putExtra(RunMapActivity.EXTRA_RUN_ID, mRun.getId());
+                startActivity(intent);
             }
         });
 
@@ -142,11 +154,16 @@ public class RunFragment extends Fragment {
             mLatitudeTextView.setText(Double.toString(mLastLocation.getLatitude()));
             mLongitudeTextView.setText(Double.toString(mLastLocation.getLongitude()));
             mAltitudeTextView.setText(Double.toString(mLastLocation.getAltitude()));
+            mMapButton.setEnabled(true);
+        } else {
+            mMapButton.setEnabled(false);
         }
+
         mDurationTextView.setText(Run.formatDuration(durationSeconds));
 
         mStartButton.setEnabled(!started);
         mStopButton.setEnabled(started && trackingThisRun);
+
     }
 
     private class RunLoaderCallbacks implements android.support.v4.app.LoaderManager.LoaderCallbacks<Run> {

@@ -162,6 +162,10 @@ public class RunManager {
         return location;
     }
 
+    public RunDatabaseHelper.LocationCursor queryLocationsForRun(long runId) {
+        return mRunDatabaseHelper.queryLocationsForRun(runId);
+    }
+
     public void insertLocation(Location location) {
         if (mCurrentRunId != -1) {
             mRunDatabaseHelper.insertLocation(mCurrentRunId, location);
